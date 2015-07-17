@@ -33,7 +33,7 @@ class Userdata(object):
     create the userdata from jinja template
     '''
 
-    def __init__(self, hostname, templ_file):
+    def __init__(self, hostname, awskeys, templ_file):
         '''
         user data
         add value fast so assume connection/region
@@ -42,6 +42,7 @@ class Userdata(object):
         self.templ_file = templ_file
         self.jinjaload = JinjaLoad(searchpath=".")
         self.jinjaenv = JinjaEnv(loader=self.jinjaload)
+        self.awskeys = awskeys
 
 
     def templ(self):
@@ -50,6 +51,8 @@ class Userdata(object):
         '''
         template_values = {
             'hostname' : self.hostname,
+            'aws_key' : self.awskeys.split(':')[0],
+            'aws_secret' : self.awskeys.split(':')[1],
         }
 
         template = self.jinjaenv.get_template(self.templ_file)
@@ -182,6 +185,9 @@ def main():
         parser.add_argument('--list',
                             help='list instance ID (or all) ',
                             default=None)
+        parser.add_argument('-a', '--awskeys',
+                            help='AWS access and secret key : separated',
+                            default=':')
         args = parser.parse_args()
         if len(sys.argv) < 2:
             parser.print_usage()
@@ -198,7 +204,7 @@ def main():
         my_inst = Launch('')
         my_inst.halt(args.halt)
         sys.exit(0)
-    my_userdata = Userdata(args.hostname, args.templatefile)
+    my_userdata = Userdata(args.hostname, args.awskeys, args.templatefile)
     my_data = my_userdata.templ()
     my_inst = Launch(my_data)
     my_inst.addsecurity()

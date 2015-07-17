@@ -5,15 +5,17 @@
 output:
  all: "|tee -a /var/tmp/cloudinit.out"
 hostname: {{ hostname }}
+manage_etc_hosts: true
 bootcmd:
  - useradd -g ubuntu -u 1001 -s /bin/bash -d /home/pt-user -c 'AWS default user (PT)' pt-user
  - usermod -g admin pt-user
 apt_sources:
 packages:
- - redis
+ - redis-server
  - python-pip
  - python-boto
  - python-flask
+ - python-redis
  - nginx
 final_message: "The system is up, after $UPTIME seconds"
 runcmd:
@@ -25,17 +27,13 @@ runcmd:
  - echo [Credentials] > /etc/default/boto
  - echo aws_access_key_id = {{ aws_key }} >> /etc/default/boto
  - echo aws_secret_access_key = {{ aws_secret }} >> /etc/default/boto
- - echo [s3] >> /etc/default/boto
- - echo host = s3.us-west-2.amazonaws.com >> /etc/default/boto
  - echo [Boto] >> /etc/default/boto
+ - echo http_socket_timeout = http_socket_timeout = 1800 >> /etc/default/boto
  - ln -s /etc/default/boto /root/.boto
  - ln -s /etc/default/boto /home/pt-user/.boto
  - ln -s /etc/default/boto /etc/boto.cfg
  - pip install awscli
- - echo CREATE ROLE dalake PASSWORD \'HDP\' NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN | su -c psql postgres
- - echo CREATE ROLE pgsql PASSWORD \'HDP\' NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN | su -c psql postgres
- - echo "CREATE DATABASE fs OWNER dalake TEMPLATE = template0 ENCODING 'utf8'" | su -c psql postgres
- - echo "HDP" > /root/S3_BUCKET
+ - echo "pt" > /root/S3_BUCKET
  - |
     python -c "
     import boto

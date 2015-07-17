@@ -6,8 +6,8 @@ output:
  all: "|tee -a /var/tmp/cloudinit.out"
 hostname: {{ hostname }}
 bootcmd:
- - useradd -g 1000 -u 1001 -s /bin/bash -d /home/pt-user -c 'AWS default user (PT)' pt-user
- - usermod -g wheel pt-user
+ - useradd -g ubuntu -u 1001 -s /bin/bash -d /home/pt-user -c 'AWS default user (PT)' pt-user
+ - usermod -g admin pt-user
 apt_sources:
 packages:
  - redis

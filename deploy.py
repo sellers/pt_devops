@@ -161,9 +161,10 @@ class Launch(object):
             while not instance.update() == 'running':
                 time.sleep(3)
                 print('{}'.rstrip('\r\n').format('..')).rstrip('\n\r')
-            print('id {} launched @ {}'
-                .format(instance,
-                        instance.public_dns_name))
+            print('id {} launched ssh -i ~/.ssh/{} ubuntu@{}'
+                  .format(instance,
+                          self.key_pair_name,
+                          instance.public_dns_name))
         except Exception as err:
             security_groups=['your-security-group-here']
             print('error launching: {}'.format(err))

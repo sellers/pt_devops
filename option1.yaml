@@ -6,9 +6,6 @@ output:
  all: "|tee -a /var/tmp/cloudinit.out"
 hostname: {{ hostname }}
 manage_etc_hosts: true
-bootcmd:
- - useradd -g ubuntu -u 1001 -s /bin/bash -d /home/pt-user -c 'AWS default user (PT)' pt-user
- - usermod -g admin pt-user
 apt_sources:
 packages:
  - redis-server
@@ -17,6 +14,9 @@ packages:
  - python-flask
  - python-redis
  - nginx
+ - python-virtualenv
+ - uwsgi
+ - git
 final_message: "The system is up, after $UPTIME seconds"
 runcmd:
 {% if production %}
@@ -33,17 +33,38 @@ runcmd:
  - ln -s /etc/default/boto /home/pt-user/.boto
  - ln -s /etc/default/boto /etc/boto.cfg
  - pip install awscli
- - echo "pt" > /root/S3_BUCKET
+ - echo "cgseller-pt" > /root/S3_BUCKET
  - |
     python -c "
     import boto
     bucket=open('/root/S3_BUCKET', 'r').readline().strip()
     boto.connect_s3().create_bucket(bucket)
     " 
+- mkdir /var/run/pt
+- mkdir /var/log/pt
+- mkdir /etc/pt
+- chown www_data:www_data /var/run/pt
+- chown www_data:www_data /var/log/pt
+- mkdir /home/ubuntu/pt
+- chown ubuntu /home/ubuntu/pt
+- chgrp www_data /home/ubuntu/pt
+- pip install virtualenv uwsgi
+- |
+   cd /home/ubuntu/pt
+   virtualenv env
+   source env/bin/activate
+  pip install flask
+# this may be wrapped in loop in case pip fails - 
 {% if production %}
- -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws s3 cp s3://HDP/db_dumps/{{hostname}}/{{hostname}}-latest-lake.pg_dump /tmp/
+ -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws s3 cp s3://cgseller-pt/db_dumps/{{hostname}}/{{hostname}}-latest.pg_dump /tmp/
 {% else %}
- -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws --region us-west-2 s3 cp s3://HDP/db_dumps/{{hostname}}/{{hostname}}-latest-lake.pg_dump /tmp/
+ -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws --region us-west-2 s3 cp s3://cgseller-pt/db_dumps/{{hostname}}/{{hostname}}-latest-dev.pg_dump /tmp/
 {% endif %}
- - su -c 'pg_restore -d fs /tmp/{{hostname}}-latest-lake.pg_dump' postgres
- - service apache2 restart
+ - git clone https://github.com/sellers/pt_devops.git /home/ubuntu/pt_src
+ - cp /home/ubuntu/pt_src/conf/pt_nginx.conf /etc/nginx/sites-available/pt
+ - cp /home/ubuntu/pt_src/conf/pt_uwsgi.ini /etc/pt/uwsgi.ini
+ - cp /home/ubuntu/pt_src/conf/pt_init.conf /etc/conf/pt.conf
+ - ln -s /etc/nginx/sites-available/pt /etc/nginx/sites-enabled/pt
+ - ln -s /etc/uwsgi/apps-available/pt.ini /etc/uwsgi/apps-enabled/pt.ini
+ - service nginx restart
+ - service pt start

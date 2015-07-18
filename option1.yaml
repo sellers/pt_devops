@@ -40,15 +40,15 @@ runcmd:
     bucket=open('/root/S3_BUCKET', 'r').readline().strip()
     boto.connect_s3().create_bucket(bucket)
     " 
-- mkdir /var/run/pt
-- mkdir /var/log/pt
-- mkdir /etc/pt
-- chown www_data:www_data /var/run/pt
-- chown www_data:www_data /var/log/pt
-- mkdir /home/ubuntu/pt
-- chown ubuntu /home/ubuntu/pt
-- chgrp www-data /home/ubuntu/pt
-- pip install virtualenv uwsgi
+ - mkdir /var/run/pt
+ - mkdir /var/log/pt
+ - mkdir /etc/pt
+ - chown www_data:www_data /var/run/pt
+ - chown www_data:www_data /var/log/pt
+ - mkdir /home/ubuntu/pt
+ - chown ubuntu /home/ubuntu/pt
+ - chgrp www-data /home/ubuntu/pt
+ - pip install virtualenv uwsgi
 {% if production %}
  -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws s3 cp s3://cgseller-pt/db_dumps/{{hostname}}/{{hostname}}-latest.pg_dump /tmp/
 {% else %}
@@ -57,7 +57,7 @@ runcmd:
  - git clone https://github.com/sellers/pt_devops.git /home/ubuntu/pt_src
  - cp /home/ubuntu/pt_src/conf/pt_nginx.conf /etc/nginx/sites-available/pt
  - cp /home/ubuntu/pt_src/conf/pt_uwsgi.ini /etc/pt/uwsgi.ini
- - cp /home/ubuntu/pt_src/conf/pt_init.conf /etc/conf/pt.conf
+ - cp /home/ubuntu/pt_src/conf/pt_init.conf /etc/init/pt.conf
  - ln -s /etc/nginx/sites-available/pt /etc/nginx/sites-enabled/pt
  - ln -s /etc/uwsgi/apps-available/pt.ini /etc/uwsgi/apps-enabled/pt.ini
  - |

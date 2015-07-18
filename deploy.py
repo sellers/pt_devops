@@ -160,7 +160,7 @@ class Launch(object):
             print('launching instance ')
             while not instance.update() == 'running':
                 time.sleep(3)
-                print('{}'.rstrip('\r\n').format('..')).rstrip('\n\r'),
+                sys.stdout.write('.')
             print('id {} launched ssh -i ~/.ssh/{}.rsa ubuntu@{}'
                   .format(instance,
                           self.key_pair_name,

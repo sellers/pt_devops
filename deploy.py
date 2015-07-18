@@ -157,12 +157,12 @@ class Launch(object):
                                     user_data=self.userdata)
 
             instance = res.instances[0]
-            print('launching instance ')
+            sys.stdout.write('launching instance ')
             while not instance.update() == 'running':
                 time.sleep(3)
-                sys.stdout.write('.')
+                sys.stdout.write('. ')
                 sys.stdout.flush()
-            print('id {} launched ssh -i ~/.ssh/{}.rsa ubuntu@{}'
+            print('\nid {} launched ssh -i ~/.ssh/{}.rsa ubuntu@{}'
                   .format(instance,
                           self.key_pair_name,
                           instance.public_dns_name))

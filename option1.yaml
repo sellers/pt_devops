@@ -59,6 +59,7 @@ runcmd:
  - cp /home/ubuntu/pt_src/conf/pt_nginx.conf /etc/nginx/sites-available/pt
  - cp /home/ubuntu/pt_src/conf/pt_uwsgi.ini /etc/pt/uwsgi.ini
  - cp /home/ubuntu/pt_src/conf/pt_init.conf /etc/init/pt.conf
+ - ln -s /home/ubuntu/pt_src/pt.py /home/ubuntu/pt
  - ln -s /etc/nginx/sites-available/pt /etc/nginx/sites-enabled/pt
  - ln -s /etc/uwsgi/apps-available/pt.ini /etc/uwsgi/apps-enabled/pt.ini
  - rm /etc/nginx/sites-enabled/default

@@ -161,6 +161,7 @@ class Launch(object):
             while not instance.update() == 'running':
                 time.sleep(3)
                 sys.stdout.write('.')
+                sys.stdout.flush()
             print('id {} launched ssh -i ~/.ssh/{}.rsa ubuntu@{}'
                   .format(instance,
                           self.key_pair_name,

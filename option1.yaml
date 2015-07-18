@@ -11,11 +11,11 @@ packages:
  - redis-server
  - python-pip
  - python-boto
- - python-flask
  - python-redis
  - nginx
  - python-virtualenv
- - uwsgi
+ - python-dev
+ - build-essential
  - git
 final_message: "The system is up, after $UPTIME seconds"
 runcmd:
@@ -30,7 +30,7 @@ runcmd:
  - echo [Boto] >> /etc/default/boto
  - echo http_socket_timeout = http_socket_timeout = 1800 >> /etc/default/boto
  - ln -s /etc/default/boto /root/.boto
- - ln -s /etc/default/boto /home/pt-user/.boto
+ - ln -s /etc/default/boto /home/ubuntu/.boto
  - ln -s /etc/default/boto /etc/boto.cfg
  - pip install awscli
  - echo "cgseller-pt" > /root/S3_BUCKET
@@ -43,12 +43,13 @@ runcmd:
  - mkdir /var/run/pt
  - mkdir /var/log/pt
  - mkdir /etc/pt
- - chown www_data:www_data /var/run/pt
- - chown www_data:www_data /var/log/pt
+ - chown www-data:www-data /var/run/pt
+ - chown www-data:www-data /var/log/pt
  - mkdir /home/ubuntu/pt
  - chown ubuntu /home/ubuntu/pt
  - chgrp www-data /home/ubuntu/pt
- - pip install virtualenv uwsgi
+ - pip install virtualenv
+ - pip install uwsgi
 {% if production %}
  -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws s3 cp s3://cgseller-pt/db_dumps/{{hostname}}/{{hostname}}-latest.pg_dump /tmp/
 {% else %}
@@ -60,7 +61,7 @@ runcmd:
  - cp /home/ubuntu/pt_src/conf/pt_init.conf /etc/init/pt.conf
  - ln -s /etc/nginx/sites-available/pt /etc/nginx/sites-enabled/pt
  - ln -s /etc/uwsgi/apps-available/pt.ini /etc/uwsgi/apps-enabled/pt.ini
- - |
-    "su - ubuntu -c 'bash /home/ubuntu/pt_src/setup_virtual.sh'"
+ - rm /etc/nginx/sites-enabled/default
+ - bash -c 'su - ubuntu -c /home/ubuntu/pt_src/setup_virtual.sh'
  - service nginx restart
  - service pt start

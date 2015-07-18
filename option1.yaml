@@ -47,14 +47,8 @@ runcmd:
 - chown www_data:www_data /var/log/pt
 - mkdir /home/ubuntu/pt
 - chown ubuntu /home/ubuntu/pt
-- chgrp www_data /home/ubuntu/pt
+- chgrp www-data /home/ubuntu/pt
 - pip install virtualenv uwsgi
-- |
-   cd /home/ubuntu/pt
-   virtualenv env
-   source env/bin/activate
-  pip install flask
-# this may be wrapped in loop in case pip fails - 
 {% if production %}
  -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws s3 cp s3://cgseller-pt/db_dumps/{{hostname}}/{{hostname}}-latest.pg_dump /tmp/
 {% else %}
@@ -66,5 +60,7 @@ runcmd:
  - cp /home/ubuntu/pt_src/conf/pt_init.conf /etc/conf/pt.conf
  - ln -s /etc/nginx/sites-available/pt /etc/nginx/sites-enabled/pt
  - ln -s /etc/uwsgi/apps-available/pt.ini /etc/uwsgi/apps-enabled/pt.ini
+ - |
+    "su - ubuntu -c 'bash /home/ubuntu/pt_src/setup_virtual.sh'"
  - service nginx restart
  - service pt start

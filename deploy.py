@@ -102,6 +102,13 @@ class Launch(object):
                 from_port='0',
                 to_port='65535',
                 cidr_ip=cidr_ip)
+        conn.authorize_security_group(
+                group_name='salt_self',
+                ip_protocol='tcp',
+                from_port='4505',
+                to_port='4506',
+                cidr_ip=self.ip)
+
 
     def list(self, inst_id=None):
         '''

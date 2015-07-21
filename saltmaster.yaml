@@ -10,6 +10,7 @@ apt_sources:
  - source: "ppa:saltstack/salt"
 packages:
  - python-software-properties
+ - python-boto
  - software-properties-common
  - salt-master
  - git

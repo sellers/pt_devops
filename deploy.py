@@ -123,27 +123,29 @@ class Launch(object):
         return
 
 
-    def halt(self, inst_id):
+    def halt(self, inst_ids):
         '''
         halt the instance you started
         '''
-        try:
-            ec2 = EC2Connection()
-            inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
-            res = ec2.terminate_instances(instance_ids=inst_id)
-            print inst._state.name
-            while not inst._state.name == 'terminated':
-                time.sleep(4)
-                print('{}{}'.format(inst.__state.name,'..')).rstrip("\n\r")
-            print('id {} {} done'.format(inst.id, inst.state_reason))
-        except Exception as err:
-            print('error {}'.format(err))
-        try:
-            ec2.delete_security_group(self.ip)
-        except Exception as err:
-            print('err rm sec group {}'.format(err))
+        for inst_id in inst_ids:
+            try:
+                ec2 = EC2Connection()
+                inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
+                res = ec2.terminate_instances(instance_ids=inst_id)
+                print('attempting halt, still: {}'.format(inst._state.name))
+                while not inst._state.name == 'terminated':
+                    time.sleep(3)
+                    print('  .. {}{}'.format(inst._state.name, '..')).rstrip("\n")
+                print('id {} {} done'.format(inst.id, inst.state_reason))
+            except Exception as err:
+                print('halt error {}'.format(err))
+            try:
+                time.sleep(5)  # try to allow coalesce 
+                ec2.delete_security_group(self.ip)
+            except Exception as err:
+                print('err rm sec group {}'.format(err))
         return
-
+    
     def launch(self):
         '''
         launch an instance in eC2
@@ -183,7 +185,8 @@ def main():
         parser.add_argument('-n', '--hostname',
                             help='what hostname to set')
         parser.add_argument('--halt',
-                            help='halt/terminate instance ID')
+                            help='halt/terminate instance ID',
+                            nargs='+')
         parser.add_argument('--list',
                             help='list instance ID (or all) ',
                             default=None)

@@ -1,0 +1,38 @@
+{# jinja2 #}
+#cloud-config
+# for PT DevOps Testing
+# objective: install stack of nginx+flask+redis
+output:
+ all: "|tee -a /var/tmp/cloudinit.out"
+hostname: {{ hostname }}
+manage_etc_hosts: true
+apt_sources:
+ - source: "ppa:saltstack/salt"
+packages:
+ - python-software-properties
+ - software-properties-common
+ - salt-master
+ - git
+final_message: "The system is up, after $UPTIME seconds"
+runcmd:
+{% if production %}
+ - touch /PRODUCTION
+{% else %}
+ - touch /DEVEL
+{% endif %}
+ - echo [Credentials] > /etc/default/boto
+ - echo aws_access_key_id = {{ aws_key }} >> /etc/default/boto
+ - echo aws_secret_access_key = {{ aws_secret }} >> /etc/default/boto
+ - echo [Boto] >> /etc/default/boto
+ - echo http_socket_timeout = http_socket_timeout = 1800 >> /etc/default/boto
+ - ln -s /etc/default/boto /root/.boto
+ - ln -s /etc/default/boto /home/ubuntu/.boto
+ - ln -s /etc/default/boto /etc/boto.cfg
+ - pip install awscli
+ - echo "cgseller-pt" > /root/S3_BUCKET
+ - |
+    python -c "
+    import boto
+    bucket=open('/root/S3_BUCKET', 'r').readline().strip()
+    boto.connect_s3().create_bucket(bucket)
+    " 

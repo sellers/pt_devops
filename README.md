@@ -1,16 +1,16 @@
 # pt_devops
-This is the option 1 
+### This is the option 1 
 
 deploy.py:  this is the management tool to launch and instance in EC2 
 
-*.yaml :  these are jinja2 templated file that send userdata to EC2 (cloud-init)
+*.yaml :  these are jinja2 templated files that send userdata to EC2 (cloud-init)
   saltmaster.yaml will spin up an ec2 instance as a saltmaster
   option1.yaml is a three-tier architecture of flask+nginx+redis
 
 setup_virtual.sh : this is a script that sets up the virtualenv for flask/python for 
-the app - it's invocated by cloud-init and should be replaced with salt. 
+the app - it's invocated by cloud-init and should be replaced with salt.
 
-pt.py: this is the app (flask)
+pt.py: this is the web app (flask), shows visitors
 
 Purpose:
 To complete the following:

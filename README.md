@@ -54,3 +54,9 @@ requesting access
 * make cloud-init templates more generic
 * take test pt-dev creds out of yaml files for .boto conf file create
 * make keypair for SSH an argument to deploy.py
+
+#### Notes:
+* the deploy.py script will open up all TCP ports to your IP address, so if you
+  are behind a dynamic IP (e.g. home ISP) you may want to be careful
+* the AWS keys for this dev user are in github, so be careful of leaving this
+  open on running instances

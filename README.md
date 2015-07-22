@@ -19,6 +19,7 @@ the app - it's invocated by cloud-init and should be replaced with salt.
 
 #### Purpose:
 To complete the following:
+
 1. start an ec2 instance that runs a salt master (inf. setup)
 2. start an ec2 instnace that runs a flask+nginx+redis solution
 3. deploy a flask app that will test nginx+flask+redis

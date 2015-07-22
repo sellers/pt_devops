@@ -22,7 +22,6 @@ bootcmd:
 write_files:
 - content: |
      # cloud-init generated 
-
      master: {{ saltmaster }}
   path: /etc/salt/minion.d/master.conf
   permissions: '0644'

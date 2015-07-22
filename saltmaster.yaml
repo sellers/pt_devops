@@ -18,11 +18,6 @@ packages:
 final_message: "The system is up, after $UPTIME seconds"
 bootcmd:
 runcmd:
-{% if production %}
- - touch /PRODUCTION
-{% else %}
- - touch /DEVEL
-{% endif %}
  - echo [Credentials] > /etc/default/boto
  - echo aws_access_key_id = {{ aws_key }} >> /etc/default/boto
  - echo aws_secret_access_key = {{ aws_secret }} >> /etc/default/boto

@@ -39,3 +39,4 @@ replace setup_virtual.sh script with more cloud-init/salty methods
 determine how to auto-add saltkeys (cloud-init callback hook?)
 better exception handling
 tests
+make debian package or setup.py out of the pt.py ?

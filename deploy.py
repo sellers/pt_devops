@@ -151,6 +151,7 @@ class Launch(object):
                 print('starting halt of {}...'.format(inst_id))
                 ec2 = EC2Connection()
                 inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
+                res = ec2.terminate_instances(instance_ids=inst_id)
                 print('status: {}'.format(inst._state.name))
                 while not inst._state.name == 'terminated':
                     inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]

@@ -12,12 +12,18 @@ the app - it's invocated by cloud-init and should be replaced with salt.
 
 * `pt.py`: this is the web app (flask), shows visitors
 
+#### Requirements:
+1. you need to have an AWS account to use
+2. you need to have python with boto support enabled
+3. you need to have /etc/boto.cfg or similar setup with key/secret
+
 #### Purpose:
 To complete the following:
 1. start an ec2 instance that runs a salt master (inf. setup)
 2. start an ec2 instnace that runs a flask+nginx+redis solution
 3. deploy a flask app that will test nginx+flask+redis
 4. configure and start salt-minion on nginx+flask+redis instance - connecting to A above
+5. ssh keys for AWS ssh login (call it aws_pt-user for now)
 
 #### Usage:
 the Salt version is the first step toward embracing Saltstack,
@@ -36,7 +42,7 @@ each other well from what I can gather.
 requseting access 
 
 
-#### todo:
+#### Todo:
 * embrace saltstack for management and move some of the cloud-init manual steps to be salt commands
 * replace setup_virtual.sh script with more cloud-init/salty methods
 * determine how to auto-add saltkeys (cloud-init callback hook?)
@@ -45,3 +51,5 @@ requseting access
 * make debian package or setup.py out of the pt.py ?
 * make deploy.py more pythonic
 * make cloud-init templates more generic
+* take test pt-dev creds out of yaml files for .boto conf file create
+* make keypair for SSH an argument to deploy.py

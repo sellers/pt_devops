@@ -30,17 +30,17 @@ To complete the following:
 the Salt version is the first step toward embracing Saltstack,
 and migrate away from cloud-init scripts for maintainging things.
 cloud-init is awesome, but we may need to do management and auditing
-and cloud-init is not as powerful as salt may be for that.  They completment
+and cloud-init is not as powerful as salt may be for that.  They complement
 each other well from what I can gather. 
 
 1. make sure you have a ec2 account to use (and a .boto or /etc/boto.cfg file setup with the info)
-2. start the saltmaster: ./deploy.py -t saltmaster.yaml -n my-saltmaster  (you can optionally pass the AWS 
+2. start the saltmaster: `./deploy.py -t saltmaster.yaml -n my-saltmaster`  (you can optionally pass the AWS 
       keys to setup the .boto configs on the instance to use boto tools there with -a; see --help)
-3. start the 3-tier app: ./deploy.py -t option1.yaml -n my-three-tier --saltmaster <internal ip of step2 host>
-   tip: ./deploy.py --list all will show you the IP
+3. start the 3-tier app: `./deploy.py -t option1.yaml -n my-three-tier --saltmaster <internal ip of step2 host>`
+   _tip_: `./deploy.py --list all` will show you the IP
 4. visit http://<ip.of.step3.host> and see the flask app respond, click link and see redis data of visitor info
-5. ssh to saltmaster instance and run  sudo salt-key -L  and note the minion
-requseting access 
+5. ssh to saltmaster instance and run  `sudo salt-key -L` and note the minion
+requesting access 
 
 
 #### Todo:

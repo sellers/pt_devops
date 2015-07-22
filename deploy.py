@@ -111,13 +111,15 @@ class Launch(object):
                 cidr_ip=cidr_ip)
         if self.salt_master is not None:
             print('adding salt security group {}'.format(new_group.id))
-            conn.authorize_security_group(
-                ip_protocol='tcp',
-                from_port='4505',
-                to_port='4506',
-                group_id=new_group.id,
-                src_security_group_group_id=new_group.id)
-
+            try:
+                conn.authorize_security_group(
+                    ip_protocol='tcp',
+                    from_port='4505',
+                    to_port='4506',
+                    group_id=new_group.id,
+                    src_security_group_group_id=new_group.id)
+            except Exception as err:
+                print(' * informational note: {}'.format(err))
 
     def list(self, inst_id=None):
         '''
@@ -133,9 +135,10 @@ class Launch(object):
 
             instances = [i for r in res for i in r.instances]
             for inst in instances:
-                print(' {} : {} : {} : {}'.format(inst.id,
+                print(' {} : {} : {}|{} : {}'.format(inst.id,
                                                   inst._state,
                                                   inst.ip_address,
+                                                  inst.private_ip_address,
                                                   inst.tags))
         except Exception as err:
             print('issue: {}'.format(err))

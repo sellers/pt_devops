@@ -54,7 +54,7 @@ runcmd:
  - chgrp www-data /home/ubuntu/pt
  - pip install virtualenv
  - pip install uwsgi
- - git clone https://github.com/sellers/pt_devops.git /home/ubuntu/pt_src
+ - git clone -b salt https://github.com/sellers/pt_devops.git /home/ubuntu/pt_src
  - cp /home/ubuntu/pt_src/conf/pt_nginx.conf /etc/nginx/sites-available/pt
  - cp /home/ubuntu/pt_src/conf/pt_uwsgi.ini /etc/pt/uwsgi.ini
  - cp /home/ubuntu/pt_src/conf/pt_init.conf /etc/init/pt.conf

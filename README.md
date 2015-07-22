@@ -30,7 +30,10 @@ each other well from what I can gather.
 2) start the saltmaster: ./deploy.py -t saltmaster.yaml -n my-saltmaster  (you can optionally pass the AWS 
       keys to setup the .boto configs on the instance to use boto tools there with -a; see --help)
 3) start the 3-tier app: ./deploy.py -t option1.yaml -n my-three-tier --saltmaster <internal ip of step2 host>
+   tip: ./deploy.py --list all will show you the IP
 4) visit http://<ip.of.step3.host> and see the flask app respond, click link and see redis data of visitor info
+5) ssh to saltmaster instance and run  sudo salt-key -L  and note the minion
+requseting access 
 
 
 todo:

@@ -61,5 +61,5 @@ def active():
     '''
     get last users
     '''
-    return('<a href='/'>activity</a> of visitors {}'
+    return('<a href="/">activity</a> of visitors {}'
           ).format(get_user_last_activity(request.remote_addr))

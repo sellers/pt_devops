@@ -33,7 +33,8 @@ class Userdata(object):
     create the userdata from jinja template
     '''
 
-    def __init__(self, hostname, awskeys, templ_file):
+    def __init__(self, hostname, awskeys, templ_file,
+            saltmaster):
         '''
         user data
         add value fast so assume connection/region
@@ -43,6 +44,7 @@ class Userdata(object):
         self.jinjaload = JinjaLoad(searchpath=".")
         self.jinjaenv = JinjaEnv(loader=self.jinjaload)
         self.awskeys = awskeys
+        self.saltmaster = saltmaster
 
 
     def templ(self):
@@ -53,6 +55,7 @@ class Userdata(object):
             'hostname' : self.hostname,
             'aws_key' : self.awskeys.split(':')[0],
             'aws_secret' : self.awskeys.split(':')[1],
+            'saltmaster' : self.saltmaster,
         }
 
         template = self.jinjaenv.get_template(self.templ_file)
@@ -64,7 +67,7 @@ class Launch(object):
     launch an instance
     '''
 
-    def __init__(self, userdata):
+    def __init__(self, userdata, salt_master=None, hostname='missing'):
         '''
         start instance
         assume AWS stuff configured
@@ -78,6 +81,8 @@ class Launch(object):
         self.key_pair_name = 'aws_pt-user'
         self.instance_type = 't2.micro'
         self.ip = resp['ip'] or None
+        self.salt_master = salt_master
+        self.hostname = hostname
 
 
     def addsecurity(self):
@@ -87,27 +92,31 @@ class Launch(object):
 
         conn = EC2Connection()
         try:
-            conn.get_all_security_groups(groupnames=['{}'.format(self.ip)])
-            return
+            new_group = conn.get_all_security_groups(
+                groupnames=['{}'.format(self.ip)])[0]
+            print('security group {} already present'.format(self.ip))
         except Exception as err:
-            print('hi')
-        conn.create_security_group(
-            self.ip,
-            'Access from my IP'
-            )
-        cidr_ip='{}/32'.format(self.ip)
-        conn.authorize_security_group(
+            # we poorly assume the err is due to absense not true err :( 
+            print('hi - new security group needed')
+            new_group = conn.create_security_group(
+                self.ip,
+                'Access from my IP'
+                )
+            cidr_ip = '{}/32'.format(self.ip)
+            conn.authorize_security_group(
                 group_name=self.ip,
                 ip_protocol='tcp',
                 from_port='0',
                 to_port='65535',
                 cidr_ip=cidr_ip)
-        conn.authorize_security_group(
-                group_name='salt_self',
+        if self.salt_master is not None:
+            print('adding salt security group {}'.format(new_group.id))
+            conn.authorize_security_group(
                 ip_protocol='tcp',
                 from_port='4505',
                 to_port='4506',
-                cidr_ip=self.ip)
+                group_id=new_group.id,
+                src_security_group_group_id=new_group.id)
 
 
     def list(self, inst_id=None):
@@ -124,7 +133,10 @@ class Launch(object):
 
             instances = [i for r in res for i in r.instances]
             for inst in instances:
-                print(' {} : {} : {}'.format(inst.id, inst._state, inst.ip_address))
+                print(' {} : {} : {} : {}'.format(inst.id,
+                                                  inst._state,
+                                                  inst.ip_address,
+                                                  inst.tags))
         except Exception as err:
             print('issue: {}'.format(err))
         return
@@ -136,11 +148,13 @@ class Launch(object):
         '''
         for inst_id in inst_ids:
             try:
+                print('starting halt of {}...'.format(inst_id))
                 ec2 = EC2Connection()
                 inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
                 res = ec2.terminate_instances(instance_ids=inst_id)
-                print('attempting halt, still: {}'.format(inst._state.name))
+                print('status: {}'.format(inst._state.name))
                 while not inst._state.name == 'terminated':
+                    inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
                     time.sleep(3)
                     print('  .. {}{}'.format(inst._state.name, '..')).rstrip("\n")
                 print('id {} {} done'.format(inst.id, inst.state_reason))
@@ -176,8 +190,11 @@ class Launch(object):
                           self.key_pair_name,
                           instance.public_dns_name))
         except Exception as err:
-            security_groups=['your-security-group-here']
             print('error launching: {}'.format(err))
+        try:
+            ec2.create_tags([instance.id], {"Name": self.hostname})
+        except Exception as err:
+            print('error setting instance tag name {}'.format(err))
         return()
 
 
@@ -200,6 +217,11 @@ def main():
         parser.add_argument('-a', '--awskeys',
                             help='AWS access and secret key : separated',
                             default=':')
+        parser.add_argument('--saltmaster',
+                            type=str,
+                            default=None,
+                            help='saltstack master (if desired)',
+                            )
         args = parser.parse_args()
         if len(sys.argv) < 2:
             parser.print_usage()
@@ -216,9 +238,10 @@ def main():
         my_inst = Launch('')
         my_inst.halt(args.halt)
         sys.exit(0)
-    my_userdata = Userdata(args.hostname, args.awskeys, args.templatefile)
+    my_userdata = Userdata(args.hostname, args.awskeys, args.templatefile,
+            args.saltmaster)
     my_data = my_userdata.templ()
-    my_inst = Launch(my_data)
+    my_inst = Launch(my_data, args.saltmaster, args.hostname)
     my_inst.addsecurity()
     my_inst.launch()
 

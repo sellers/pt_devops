@@ -6,7 +6,6 @@ output:
  all: "|tee -a /var/tmp/cloudinit.out"
 hostname: {{ hostname }}
 manage_etc_hosts: true
-apt_sources:
 packages:
  - redis-server
  - python-pip
@@ -17,13 +16,19 @@ packages:
  - python-dev
  - build-essential
  - git
+ - salt-minion
 final_message: "The system is up, after $UPTIME seconds"
+bootcmd:
+write_files:
+- content: |
+     # cloud-init generated 
+
+     master: {{ saltmaster }}
+  path: /etc/salt/minion.d/master.conf
+  permissions: '0644'
+  owner: root:root
 runcmd:
-{% if production %}
- - touch /PRODUCTION
-{% else %}
  - touch /DEVEL
-{% endif %}
  - echo [Credentials] > /etc/default/boto
  - echo aws_access_key_id = {{ aws_key }} >> /etc/default/boto
  - echo aws_secret_access_key = {{ aws_secret }} >> /etc/default/boto
@@ -50,11 +55,6 @@ runcmd:
  - chgrp www-data /home/ubuntu/pt
  - pip install virtualenv
  - pip install uwsgi
-{% if production %}
- -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws s3 cp s3://cgseller-pt/db_dumps/{{hostname}}/{{hostname}}-latest.pg_dump /tmp/
-{% else %}
- -  AWS_CONFIG_FILE=/home/ubuntu/.boto aws --region us-west-2 s3 cp s3://cgseller-pt/db_dumps/{{hostname}}/{{hostname}}-latest-dev.pg_dump /tmp/
-{% endif %}
  - git clone https://github.com/sellers/pt_devops.git /home/ubuntu/pt_src
  - cp /home/ubuntu/pt_src/conf/pt_nginx.conf /etc/nginx/sites-available/pt
  - cp /home/ubuntu/pt_src/conf/pt_uwsgi.ini /etc/pt/uwsgi.ini
@@ -64,5 +64,6 @@ runcmd:
  - ln -s /etc/uwsgi/apps-available/pt.ini /etc/uwsgi/apps-enabled/pt.ini
  - rm /etc/nginx/sites-enabled/default
  - bash -c 'su - ubuntu -c /home/ubuntu/pt_src/setup_virtual.sh'
+ - service salt-minion restart
  - service nginx restart
  - service pt start

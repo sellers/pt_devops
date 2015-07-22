@@ -11,10 +11,12 @@ apt_sources:
 packages:
  - python-software-properties
  - python-boto
+ - python-pip
  - software-properties-common
  - salt-master
  - git
 final_message: "The system is up, after $UPTIME seconds"
+bootcmd:
 runcmd:
 {% if production %}
  - touch /PRODUCTION

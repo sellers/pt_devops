@@ -41,6 +41,7 @@ each other well from what I can gather.
 4. visit http://\<ip.of.step3.host\> and see the flask app respond, click link and see redis data of visitor info
 5. ssh to saltmaster instance and run  `sudo salt-key -L` and note the minion
 requesting access 
+6. when done - you can use `./deploy.py --halt <instance id>` to halt instances
 
 
 #### Todo:

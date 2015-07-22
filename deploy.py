@@ -98,6 +98,7 @@ class Launch(object):
         except Exception as err:
             # we poorly assume the err is due to absense not true err :(
             print('hi - new security group needed')
+            time.sleep(16)  # wait for instance to have ID/state, should poll
             new_group = conn.create_security_group(
                 self.ip,
                 'Access from my IP'
@@ -111,6 +112,7 @@ class Launch(object):
                 cidr_ip=cidr_ip)
         if self.salt_master is not None:
             print('adding salt security group {}'.format(new_group.id))
+            time.sleep(4)
             try:
                 conn.authorize_security_group(
                     ip_protocol='tcp',
@@ -118,8 +120,10 @@ class Launch(object):
                     to_port='4506',
                     group_id=new_group.id,
                     src_security_group_group_id=new_group.id)
+                print('added')
             except Exception as err:
                 print(' * informational note: {}'.format(err))
+        return
 
     def list(self, inst_id=None):
         '''

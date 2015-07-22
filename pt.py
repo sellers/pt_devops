@@ -1,9 +1,11 @@
+'''
+adopted from flask+redis example
+http://flask.pocoo.org/snippets/71/
+'''
 from datetime import datetime
 import time
 from flask import Flask, request
 from redis import Redis
-
-ONLINE_LAST_MIN = 6
 
 app = Flask(__name__)
 app.debug = True
@@ -16,6 +18,9 @@ app.config['REDIS_DB'] = 0
 redis = Redis()
 
 def mark_online(uid=None):
+    '''
+    add visitors to redis cache
+    '''
     try:
         now = int(time.time())
         expires = now + (360)
@@ -33,49 +38,28 @@ def mark_online(uid=None):
         print('debug: mark_online err {}'.format(error))
 
 def get_user_last_activity(uid):
+    '''
+    display active users in redis cache
+    '''
     last_active = redis.get('user-activity/{}'.format(uid))
     if last_active is None:
         return None
     return datetime.utcfromtimestamp(int(last_active))
 
-def get_online_users():
-    try:
-        current = int(time.time()) // 60
-        minutes = xrange(6)
-        sv = ('{}'.format([(current - x) for x in minutes]))
-        print('sv: {}'.format(sv))
-        #svalue = redis.sunion('online-users/{}'.format((current)))
-        svalue = redis.sunion('online-users/*')
-        #svalue = redis.sunion('online-users/{}'.format([(current - x) for x in xrange(6)]))
-        print('debug : online_users {}'.format(svalue))
-        return svalue
-    except Exception as ret:
-        print('exception : {}'.format(redis.keys()))
-        keys = redis.keys('*')
-        for key in keys:
-            if redis.type(key) is 'KV':
-                print(redis.get(key))
-        return('poop')
-
 @app.route('/')
 def index():
     '''
-    let's show something
+    default page and recorder of visitor
     '''
     mark_online(request.remote_addr)
-    return 'Hello from Flask! {}+{}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                            request.remote_addr)
-
-@app.route('/users')
-def users():
-    '''
-    list the visitors
-    '''
-    return 'online {}'.format(get_online_users())
+    return('<a href="/activity">Hello</a> from Flask! {}+{}'
+          ).format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                   request.remote_addr)
 
 @app.route('/activity')
 def active():
     '''
     get last users
     '''
-    return 'activity {}'.format(get_user_last_activity(request.remote_addr))
+    return('<a href="/">activity</a> of visitors {}'
+          ).format(get_user_last_activity(request.remote_addr))

@@ -34,7 +34,7 @@ class Userdata(object):
     '''
 
     def __init__(self, hostname, awskeys, templ_file,
-            saltmaster):
+                 saltmaster):
         '''
         user data
         add value fast so assume connection/region
@@ -96,7 +96,7 @@ class Launch(object):
                 groupnames=['{}'.format(self.ip)])[0]
             print('security group {} already present'.format(self.ip))
         except Exception as err:
-            # we poorly assume the err is due to absense not true err :( 
+            # we poorly assume the err is due to absense not true err :(
             print('hi - new security group needed')
             new_group = conn.create_security_group(
                 self.ip,
@@ -151,7 +151,6 @@ class Launch(object):
                 print('starting halt of {}...'.format(inst_id))
                 ec2 = EC2Connection()
                 inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
-                res = ec2.terminate_instances(instance_ids=inst_id)
                 print('status: {}'.format(inst._state.name))
                 while not inst._state.name == 'terminated':
                     inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
@@ -161,12 +160,12 @@ class Launch(object):
             except Exception as err:
                 print('halt error {}'.format(err))
             try:
-                time.sleep(5)  # try to allow coalesce 
+                time.sleep(5)  # try to allow coalesce
                 ec2.delete_security_group(self.ip)
             except Exception as err:
                 print('err rm sec group {}'.format(err))
         return
-    
+
     def launch(self):
         '''
         launch an instance in eC2
@@ -238,8 +237,10 @@ def main():
         my_inst = Launch('')
         my_inst.halt(args.halt)
         sys.exit(0)
-    my_userdata = Userdata(args.hostname, args.awskeys, args.templatefile,
-            args.saltmaster)
+    my_userdata = Userdata(args.hostname,
+                           args.awskeys,
+                           args.templatefile,
+                           args.saltmaster)
     my_data = my_userdata.templ()
     my_inst = Launch(my_data, args.saltmaster, args.hostname)
     my_inst.addsecurity()

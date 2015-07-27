@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 '''
-script to deploy AWS instances for testing
-written by Chris G. Sellers - June 2015
-adapted for use with PT
+script to manage instances for testing using libcloud
+written by Chris G. Sellers - July 2015
+adopted from similar tool written using boto
 --
 purpose is to be a deployment mgt tool for
 starting and stoping AWS instances for testing
@@ -11,9 +11,12 @@ usage is as defined --help
 '''
 
 from boto.ec2.connection import EC2Connection
+from libcloud.compute.types import Provider
+from libcloud.compute.providers import get_driver
 from jinja2 import Environment as JinjaEnv
 from jinja2 import FileSystemLoader as JinjaLoad
 import argparse
+import ConfigParser
 import time
 import sys
 import json
@@ -83,6 +86,26 @@ class Launch(object):
         self.ip = resp['ip'] or None
         self.salt_master = salt_master
         self.hostname = hostname
+        self.aws_key = None
+        self.aws_secret = None
+        self.aws_region = None
+
+    def config(self, cfile=None):
+        '''
+        read in configuration for connection from file
+        like a .boto file or similar
+        '''
+        if file is not None:
+            config_file = ConfigParser.RawConfigParser()
+            try:
+                config_file.read(cfile)
+            except IOError as err:
+                print('Error reading config {}:{}'.format(
+                    cfile, err))
+            self.aws_key = config_file.get('Credentials', 'aws_access_key_id')
+            self.aws_secret = config_file.get('Credentials', 'aws_secret_access_key')
+            self.aws_region = config_file.get('Boto', 'ec2_region_name')
+
 
 
     def addsecurity(self):
@@ -90,7 +113,7 @@ class Launch(object):
         set security group
         '''
 
-        conn = EC2Connection()
+        conn = EC2Connection(self.aws_key, self.aws_secret, region=self.aws_region)
         try:
             new_group = conn.get_all_security_groups(
                 groupnames=['{}'.format(self.ip)])[0]
@@ -131,19 +154,28 @@ class Launch(object):
         '''
 
         try:
-            ec2 = EC2Connection()
+            ec2_conn = get_driver(Provider.EC2)(self.aws_key, self.aws_secret,
+                    region=self.aws_region)
+            ###ec2 = EC2Connection()
             if inst_id is None or inst_id == 'all':
-                res = ec2.get_all_instances()
+                ###res = ec2.get_all_instances()
+                instances = ec2_conn.list_nodes()
             else:
-                res = ec2.get_all_instances(instance_ids=inst_id)
+                ###res = ec2.get_all_instances(instance_ids=inst_id)
+                instances = ec2_conn.list_nodes(ex_node_ids=list(inst_id))
 
-            instances = [i for r in res for i in r.instances]
+            ###instances = [i for r in res for i in r.instances]
             for inst in instances:
+                ###print(' {} : {} : {}|{} : {}'.format(inst.id,
+                ###                                  inst._state,
+                ###                                  inst.ip_address,
+                ###                                  inst.private_ip_address,
+                ###                                  inst.tags))
                 print(' {} : {} : {}|{} : {}'.format(inst.id,
-                                                  inst._state,
-                                                  inst.ip_address,
-                                                  inst.private_ip_address,
-                                                  inst.tags))
+                                                     inst.extra['status'],
+                                                     inst.public_ips,
+                                                     inst.private_ips,
+                                                     inst.extra['tags']))
         except Exception as err:
             print('issue: {}'.format(err))
         return
@@ -211,6 +243,9 @@ def main():
     '''
     try:
         parser = argparse.ArgumentParser()
+        parser.add_argument('-c', '--config',
+                            help='boto/libcloud config data',
+                            default=None)
         parser.add_argument('-t', '--templatefile',
                             help='Jinja2 userdata template file')
         parser.add_argument('-n', '--hostname',
@@ -239,6 +274,7 @@ def main():
 
     if args.list:
         my_inst = Launch('')
+        my_inst.config(args.config)
         my_inst.list(args.list)
         sys.exit(0)
     if args.halt:

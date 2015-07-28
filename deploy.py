@@ -188,20 +188,34 @@ class Launch(object):
         for inst_id in inst_ids:
             try:
                 print('starting halt of {}...'.format(inst_id))
-                ec2 = EC2Connection()
-                inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
-                res = ec2.terminate_instances(instance_ids=inst_id)
-                print('status: {}'.format(inst._state.name))
-                while not inst._state.name == 'terminated':
-                    inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
+                ec2 = EC2Connection() ## KEEP UNTIL SECURITY GROUPS REPLACED
+                ec2_conn = get_driver(Provider.EC2)(self.aws_key,
+                                                    self.aws_secret,
+                                                    region=self.aws_region)
+                ###inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
+                inst = ec2_conn.list_nodes(ex_node_ids=['{}'
+                                                        .format(inst_id)])[0]
+                print('{} {}'.format(inst_id, inst))
+                ec2_conn.destroy_node(inst)
+                ###res = ec2.terminate_instances(instance_ids=inst_id)
+                ###print('status: {}'.format(inst._state.name))
+                inst_status = inst.extra['status']
+                print('status: {}'.format(inst_status))
+                ###while not inst._state.name == 'terminated':
+                while not inst_status == 'terminated':
+                    ###inst = ec2.get_all_instances(instance_ids=inst_id)[0].instances[0]
+                    inst_status = ec2_conn.list_nodes(
+                            ex_node_ids=['{}'.format(inst_id)])[0].extra['status']
                     time.sleep(3)
-                    print('  .. {}{}'.format(inst._state.name, '..')).rstrip("\n")
-                print('id {} {} done'.format(inst.id, inst.state_reason))
+                    ###print('  .. {}{}'.format(inst._state.name, '..')).rstrip("\n")
+                    print('  .. {}{}'.format(inst_status, '..')).rstrip("\n")
+                print('id {} {} done'.format(inst.id, inst.extra['reason']))
             except Exception as err:
                 print('halt error {}'.format(err))
             try:
                 time.sleep(5)  # try to allow coalesce
-                ec2.delete_security_group(self.ip)
+                ec2_conn.ex_delete_security_group(self.ip)
+                ##ec2.delete_security_group(self.ip)
             except Exception as err:
                 print('err rm sec group {}'.format(err))
         return
@@ -279,6 +293,7 @@ def main():
         sys.exit(0)
     if args.halt:
         my_inst = Launch('')
+        my_inst.config(args.config)
         my_inst.halt(args.halt)
         sys.exit(0)
     my_userdata = Userdata(args.hostname,

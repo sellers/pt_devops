@@ -209,7 +209,7 @@ class Launch(object):
                     time.sleep(3)
                     ###print('  .. {}{}'.format(inst._state.name, '..')).rstrip("\n")
                     print('  .. {}{}'.format(inst_status, '..')).rstrip("\n")
-                print('id {} {} done'.format(inst.id, inst.extra['reason']))
+                print('id {} {} done'.format(inst.name, inst.extra['reason']))
             except Exception as err:
                 print('halt error {}'.format(err))
             try:
@@ -225,29 +225,51 @@ class Launch(object):
         launch an instance in eC2
         '''
         try:
-            ec2 = EC2Connection()
-            res = ec2.run_instances(self.ami_id,
-                                    instance_type=self.instance_type,
-                                    key_name=self.key_pair_name,
-                                    security_groups=['{}'.format(self.ip)],
-                                    user_data=self.userdata)
+            ec2_conn = get_driver(Provider.EC2)(self.aws_key,
+                                                self.aws_secret,
+                                                region=self.aws_region)
+            ami_image = ec2_conn.list_images(
+                    ex_image_ids=['{}'.format(self.ami_id)])[0]
 
-            instance = res.instances[0]
+            for instance_size in ec2_conn.list_sizes():
+                if instance_size.name == 't2.tiny':
+                    break
+            instance = ec2_conn.create_node(
+                    ex_keyname=self.key_pair_name,
+                    ex_userdata=self.userdata,
+                    ex_security_groups=['{}'.format(self.ip)],
+                    name=self.hostname,
+                    image=ami_image,
+                    size=instance_size)
+
+            
+            ### ec2 = EC2Connection()
+            ### res = ec2.run_instances(self.ami_id,
+            ###                        instance_type=self.instance_type,
+            ###                        key_name=self.key_pair_name,
+            ###                        security_groups=['{}'.format(self.ip)],
+            ###                        user_data=self.userdata)
+
+            ### instance = res.instances[0]
             sys.stdout.write('launching instance ')
-            while not instance.update() == 'running':
+            while not instance.extra['status'] == 'running':
+            ### while not instance.update() == 'running':
+                print instance.extra['status']
+                instance = ec2_conn.list_nodes(
+                            ex_node_ids=['{}'.format(instance.extra['instance_id'])])[0]
                 time.sleep(3)
-                sys.stdout.write('. ')
+                sys.stdout.write(' . ')
                 sys.stdout.flush()
             print('\nid {} launched ssh -i ~/.ssh/{}.rsa ubuntu@{}'
                   .format(instance,
                           self.key_pair_name,
-                          instance.public_dns_name))
+                          instance.public_ip))
         except Exception as err:
-            print('error launching: {}'.format(err))
-        try:
-            ec2.create_tags([instance.id], {"Name": self.hostname})
-        except Exception as err:
-            print('error setting instance tag name {}'.format(err))
+            print('error launching {}: {}'.format(self.hostname, err))
+        ###try:
+        ###    ec2.create_tags([instance.id], {"Name": self.hostname})
+        ###except Exception as err:
+        ###    print('error setting instance tag name {}'.format(err))
         return()
 
 
@@ -303,6 +325,7 @@ def main():
     my_data = my_userdata.templ()
     my_inst = Launch(my_data, args.saltmaster, args.hostname)
     my_inst.addsecurity()
+    my_inst.config(args.config)
     my_inst.launch()
 
 
